@@ -9,9 +9,12 @@
 <style>
 body{font-family:Arial;background:#e8f5e9;margin:0;padding:15px}
 .box{max-width:480px;margin:auto;background:#fff;border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-h1{font-size:24px;margin:5px 0}h2{font-size:16px}
+h1{font-size:24px;margin:5px 0}h2{font-size:15px;color:#333}
 input[type=file]{margin:15px 0}
-button{background:#1db954;color:#fff;border:0;padding:14px 20px;border-radius:10px;font-size:18px;font-weight:bold;width:100%;cursor:pointer}
+.mode{display:flex;gap:8px;margin:12px 0}
+.mode button{padding:12px 5px;font-size:14px;border:2px solid #ddd;background:#f5f5f5;color:#333}
+.mode button.active{background:#1db954;color:#fff;border-color:#1db954}
+button.main{background:#1db954;color:#fff;border:0;padding:14px 20px;border-radius:10px;font-size:18px;font-weight:bold;width:100%;cursor:pointer}
 #msg{margin-top:12px;font-weight:bold;color:#1b5e20}
 #progress{margin-top:10px;color:#555}
 a#dl{display:none;margin-top:12px;background:#1565c0;color:#fff;padding:12px;border-radius:10px;text-decoration:none;font-weight:bold}
@@ -23,8 +26,13 @@ small{color:#777}
 <h1>📄 Compress PDF & Image</h1>
 <h2>Compress PDF from 50MB to 1MB Free<br>Punguza PDF / Picha Bure - Bila Watermark</h2>
 <input type="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.webp"><br>
-<label>Quality: <input type="range" id="q" min="10" max="90" value="60"> <span id="qv">60%</span></label><br><br>
-<button onclick="go()">COMPRESS NOW - KAZA SASA</button>
+<b>Chagua Aina ya Kukaza:</b>
+<div class="mode">
+<button id="m1" onclick="setMode('small',this)">📱 SMALL SIZE<br><small>Kwa WhatsApp<br>50MB → 1-2MB</small></button>
+<button id="m2" class="active" onclick="setMode('balanced',this)">⚖️ BALANCED<br><small>Kawaida<br>50MB → 4-5MB</small></button>
+<button id="m3" onclick="setMode('high',this)">🖨️ HIGH QUALITY<br><small>Kwa Print<br>50MB → 10MB</small></button>
+</div>
+<button class="main" onclick="go()">COMPRESS NOW - KAZA SASA</button>
 <div id="progress"></div>
 <div id="msg"></div>
 <a id="dl" download>⬇️ DOWNLOAD - PAKUA FAILI</a>
@@ -32,13 +40,15 @@ small{color:#777}
 </div>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-document.getElementById('q').oninput=e=>document.getElementById('qv').textContent=e.target.value+'%';
-let count=parseInt(localStorage.getItem('c')||'0');
+let mode='balanced';
+function setMode(m,btn){mode=m; document.querySelectorAll('.mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');}
+function getQuality(){ if(mode==='small') return 0.45; if(mode==='high') return 0.88; return 0.68; }
+function getScale(){ if(mode==='small') return 1.1; if(mode==='high') return 2.0; return 1.5; }
 async function go(){
  let f=document.getElementById('file').files[0];
  if(!f){alert('Chagua faili kwanza!');return;}
  if(f.name.toLowerCase().endsWith('.docx')||f.name.toLowerCase().endsWith('.doc')){alert('Hii ni Word (.docx). Tafadhali ibadilishe kuwa PDF kwanza: Fungua Google Docs > Download as PDF');return;}
- let quality=parseInt(document.getElementById('q').value)/100;
+ let quality=getQuality(); let scale=getScale();
  let prog=document.getElementById('progress'); let msg=document.getElementById('msg');
  prog.textContent='Inakaza... subiri kidogo...'; msg.textContent='';
  try{
@@ -54,9 +64,9 @@ async function go(){
    let pdf=await pdfjsLib.getDocument({data:buf}).promise;
    let out=await PDFLib.PDFDocument.create();
    for(let i=1;i<=pdf.numPages;i++){
-    prog.textContent=`Inakaza ukurasa ${i} / ${pdf.numPages}...`;
+    prog.textContent=`Inakaza ukurasa ${i} / ${pdf.numPages}... (${mode})`;
     let page=await pdf.getPage(i);
-    let vp=page.getViewport({scale:1.5});
+    let vp=page.getViewport({scale:scale});
     let c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
     await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
     let dataUrl=c.toDataURL('image/jpeg',quality);
@@ -66,7 +76,7 @@ async function go(){
    let bytes=await out.save();
    let blob=new Blob([bytes],{type:'application/pdf'});
    show(blob,f.name.replace('.pdf','')+'-compressed.pdf');
-   prog.textContent=`Imemaliza! Ukurasa ${pdf.numPages} umekazwa. Ukubwa wa zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(blob.size/1024/1024).toFixed(1)}MB`;
+   prog.textContent=`Imemaliza! Ukurasa ${pdf.numPages} umekazwa. Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(blob.size/1024/1024).toFixed(1)}MB (${mode})`;
   } else {alert('Chagua PDF au Picha tu');}
  }catch(e){prog.textContent='';msg.textContent='Imeshindwa: '+e.message;}
 }
@@ -78,4 +88,4 @@ function show(blob,name){
 }
 </script>
 </body>
-</html>
+ </html>
