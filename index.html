@@ -1,51 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sw">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compress PDF & Image Free - No Watermark</title>
+<title>Compress PDF & Image - Punguza PDF Bure</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
-body{font-family:Arial;text-align:center;padding:15px;background:#f0fdf4}
-.box{background:white;padding:20px;border-radius:15px;max-width:500px;margin:auto;box-shadow:0 0 15px #ccc}
-button{background:#16a34a;color:white;padding:15px;border:none;border-radius:10px;font-size:17px;width:100%;font-weight:bold}
-input{margin:15px 0}
-#result{margin-top:15px;font-weight:bold;color:green}
+body{font-family:Arial;background:#e8f5e9;margin:0;padding:15px}
+.box{max-width:480px;margin:auto;background:#fff;border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+h1{font-size:24px;margin:5px 0}h2{font-size:16px}
+input[type=file]{margin:15px 0}
+button{background:#1db954;color:#fff;border:0;padding:14px 20px;border-radius:10px;font-size:18px;font-weight:bold;width:100%;cursor:pointer}
+#msg{margin-top:12px;font-weight:bold;color:#1b5e20}
+#progress{margin-top:10px;color:#555}
+a#dl{display:none;margin-top:12px;background:#1565c0;color:#fff;padding:12px;border-radius:10px;text-decoration:none;font-weight:bold}
+small{color:#777}
 </style>
 </head>
 <body>
 <div class="box">
-<h2>📄 Compress PDF & Image</h2>
-<p><b>Compress PDF from 50MB to 1MB Free</b><br>Punguza PDF / Picha Bure - Bila Watermark</p>
-<input type="file" id="file" accept="image/*,.pdf">
-<br>
-<label>Quality: <input type="range" id="q" min="10" max="90" value="60"> <span id="qv">60%</span></label>
-<br><button onclick="compress()">COMPRESS NOW - KAZA SASA</button>
-<p id="result"></p>
-<p style="font-size:12px;color:gray">Free 3x per day | Pro 1,000/- or $1 Unlimited<br>Files deleted after 1 hour - No one sees your files</p>
+<h1>📄 Compress PDF & Image</h1>
+<h2>Compress PDF from 50MB to 1MB Free<br>Punguza PDF / Picha Bure - Bila Watermark</h2>
+<input type="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.webp"><br>
+<label>Quality: <input type="range" id="q" min="10" max="90" value="60"> <span id="qv">60%</span></label><br><br>
+<button onclick="go()">COMPRESS NOW - KAZA SASA</button>
+<div id="progress"></div>
+<div id="msg"></div>
+<a id="dl" download>⬇️ DOWNLOAD - PAKUA FAILI</a>
+<p><small>Free 3x per day | Pro 1,000/- or $1 Unlimited<br>Files deleted after 1 hour - No one sees your files</small></p>
 </div>
 <script>
-document.getElementById('q').oninput=e=>{document.getElementById('qv').innerText=e.target.value+'%'}
-async function compress(){
-let f=document.getElementById('file').files[0];
-if(!f){alert('Chagua faili kwanza / Choose file first');return}
-document.getElementById('result').innerText='Inakaza... Tafadhali subiri...';
-if(f.type.startsWith('image/')){
-let img=new Image(); img.src=URL.createObjectURL(f);
-img.onload=()=>{
-let c=document.createElement('canvas');
-let scale=Math.min(1, 1200/img.width);
-c.width=img.width*scale; c.height=img.height*scale;
-c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-let q=document.getElementById('q').value/100;
-c.toBlob(b=>{
-let a=document.createElement('a'); a.href=URL.createObjectURL(b);
-a.download='compressed-'+f.name+'.jpg'; a.click();
-document.getElementById('result').innerText='Imefanikiwa! Kutoka '+(f.size/1024/1024).toFixed(2)+'MB kwenda '+(b.size/1024/1024).toFixed(2)+'MB ✅';
-},'image/jpeg',q);
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+document.getElementById('q').oninput=e=>document.getElementById('qv').textContent=e.target.value+'%';
+let count=parseInt(localStorage.getItem('c')||'0');
+async function go(){
+ let f=document.getElementById('file').files[0];
+ if(!f){alert('Chagua faili kwanza!');return;}
+ if(f.name.toLowerCase().endsWith('.docx')||f.name.toLowerCase().endsWith('.doc')){alert('Hii ni Word (.docx). Tafadhali ibadilishe kuwa PDF kwanza: Fungua Google Docs > Download as PDF');return;}
+ let quality=parseInt(document.getElementById('q').value)/100;
+ let prog=document.getElementById('progress'); let msg=document.getElementById('msg');
+ prog.textContent='Inakaza... subiri kidogo...'; msg.textContent='';
+ try{
+  if(f.type.startsWith('image/')){
+   let img=new Image(); img.src=URL.createObjectURL(f);
+   await new Promise(r=>img.onload=r);
+   let c=document.createElement('canvas'); let s=Math.min(1,1600/img.width);
+   c.width=img.width*s; c.height=img.height*s;
+   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+   c.toBlob(b=>{show(b,f.name.replace(/\.[^.]+$/,'')+'-compressed.jpg')},'image/jpeg',quality);
+  } else if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
+   let buf=await f.arrayBuffer();
+   let pdf=await pdfjsLib.getDocument({data:buf}).promise;
+   let out=await PDFLib.PDFDocument.create();
+   for(let i=1;i<=pdf.numPages;i++){
+    prog.textContent=`Inakaza ukurasa ${i} / ${pdf.numPages}...`;
+    let page=await pdf.getPage(i);
+    let vp=page.getViewport({scale:1.5});
+    let c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    let dataUrl=c.toDataURL('image/jpeg',quality);
+    let img=await out.embedJpg(dataUrl);
+    let p=out.addPage([img.width,img.height]); p.drawImage(img,{x:0,y:0,width:img.width,height:img.height});
+   }
+   let bytes=await out.save();
+   let blob=new Blob([bytes],{type:'application/pdf'});
+   show(blob,f.name.replace('.pdf','')+'-compressed.pdf');
+   prog.textContent=`Imemaliza! Ukurasa ${pdf.numPages} umekazwa. Ukubwa wa zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(blob.size/1024/1024).toFixed(1)}MB`;
+  } else {alert('Chagua PDF au Picha tu');}
+ }catch(e){prog.textContent='';msg.textContent='Imeshindwa: '+e.message;}
 }
-}else{
-document.getElementById('result').innerText='Kwa PDF, pakua na tutaongeza PDF compressor kamili hivi karibuni. Kwa sasa picha inafanya kazi 100%.';
-}
+function show(blob,name){
+ let a=document.getElementById('dl');
+ a.href=URL.createObjectURL(blob); a.download=name; a.style.display='block';
+ a.textContent='⬇️ DOWNLOAD - '+name+' ('+(blob.size/1024).toFixed(0)+' KB)';
+ document.getElementById('msg').textContent='Imekamilika! ✅ Pakua sasa.';
 }
 </script>
 </body>
