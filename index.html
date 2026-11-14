@@ -3,17 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compress PDF & Image - Punguza PDF Bure</title>
+<title>Compress PDF & Image</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
 body{font-family:Arial;background:#e8f5e9;margin:0;padding:15px}
 .box{max-width:480px;margin:auto;background:#fff;border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-h1{font-size:24px;margin:5px 0}h2{font-size:15px;color:#333}
-input[type=file]{margin:15px 0}
+h1{font-size:24px}h2{font-size:15px;color:#333}
+input[type=file]{margin:12px 0}
+.targetBox{background:#f1f8e9;padding:12px;border-radius:10px;margin:10px 0}
+.targetBox input{font-size:22px;width:90px;text-align:center;padding:8px;border:2px solid #1db954;border-radius:8px;font-weight:bold}
 .mode{display:flex;gap:8px;margin:12px 0}
 .mode button{padding:12px 5px;font-size:14px;border:2px solid #ddd;background:#f5f5f5;color:#333;line-height:1.3}
-.mode button small{color:#555;font-size:11px;display:block;margin-top:4px;line-height:1.3}
+.mode button small{color:#555;font-size:11px;display:block;margin-top:4px}
 .mode button.active{background:#1db954;color:#fff;border-color:#1db954}
 .mode button.active small{color:#e8ffe8}
 button.main{background:#1db954;color:#fff;border:0;padding:14px 20px;border-radius:10px;font-size:18px;font-weight:bold;width:100%;cursor:pointer}
@@ -27,87 +29,100 @@ small{color:#777}
 <body>
 <div class="box">
 <h1>📄 Compress PDF & Image</h1>
-<h2>Punguza PDF / Picha Bure - Bila Watermark<br>Chagua Unataka Iwe Kubwa Gani</h2>
+<h2>Punguza PDF / Picha Bure - Bila Watermark</h2>
 <input type="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.webp"><br>
-<b>Unataka iwe MB ngapi?</b>
+<div class="targetBox">
+<b>Unataka iwe MB ngapi?</b><br><br>
+<input type="number" id="targetMB" value="5" min="0.5" max="100" step="0.5"> <b>MB</b><br>
+<small>Mfano: PDF ya 200MB, andika 20 -> itakuwa 20MB<br>PDF ya 50MB, andika 2 -> itakuwa 2MB</small>
+</div>
+<b>Chagua Quality:</b>
 <div class="mode">
-<button id="m1" onclick="setMode(1,this)">🎯 1MB<br><small>Kwa WhatsApp<br>Ndogo Kabisa</small></button>
-<button id="m2" class="active" onclick="setMode(2,this)">🎯 2MB<br><small>Kawaida<br>Quality Nzuri</small></button>
-<button id="m3" onclick="setMode(5,this)">🎯 5MB<br><small>Kwa Print<br>Quality Kubwa</small></button>
+<button id="m1" onclick="setMode('small',this)">📱 SMALL<br><small>Ndogo Kabisa<br>Kwa WhatsApp</small></button>
+<button id="m2" class="active" onclick="setMode('balanced',this)">⚖️ BALANCED<br><small>Kawaida<br>Quality Nzuri</small></button>
+<button id="m3" onclick="setMode('high',this)">🖨️ HIGH<br><small>Quality Kubwa<br>Kwa Print</small></button>
 </div>
 <button class="main" onclick="go()">COMPRESS NOW - KAZA SASA</button>
 <div id="progress"></div>
 <div id="msg"></div>
 <div id="warn"></div>
-<a id="dl" download>⬇️ DOWNLOAD - PAKUA FAILI</a>
-<p><small>Free 3x per day | Pro 1,000/- or $1 Unlimited<br>Files deleted after 1 hour</small></p>
+<a id="dl" download>⬇️ DOWNLOAD</a>
+<p><small>Free 3x per day | Pro 1,000/- or $1 Unlimited</small></p>
 </div>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-let targetMB=2;
-function setMode(m,btn){targetMB=m; document.querySelectorAll('.mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.getElementById('warn').style.display='none';}
-async function compressPdfToTarget(buf, targetBytes, prog, totalPages){
-  let attempts=[
-    {scale:1.2, q:0.65},
-    {scale:1.0, q:0.50},
-    {scale:0.8, q:0.40},
-    {scale:0.6, q:0.30},
-    {scale:0.5, q:0.22},
-    {scale:0.4, q:0.15}
-  ];
-  let pdf=await pdfjsLib.getDocument({data:buf}).promise;
-  for(let a=0;a<attempts.length;a++){
-    let {scale,q}=attempts[a];
-    prog.textContent=`Inajaribu kufika ${targetMB}MB... Jaribio ${a+1}/6 (Quality ${Math.round(q*100)}%) - Ukurasa 0/${pdf.numPages}`;
-    let out=await PDFLib.PDFDocument.create();
-    for(let i=1;i<=pdf.numPages;i++){
-      prog.textContent=`Inajaribu kufika ${targetMB}MB... Jaribio ${a+1}/6 - Ukurasa ${i}/${pdf.numPages}`;
-      let page=await pdf.getPage(i);
-      let vp=page.getViewport({scale:scale});
-      let c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
-      await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-      let dataUrl=c.toDataURL('image/jpeg',q);
-      let img=await out.embedJpg(dataUrl);
-      let p=out.addPage([img.width,img.height]); p.drawImage(img,{x:0,y:0,width:img.width,height:img.height});
-    }
-    let bytes=await out.save();
-    let blob=new Blob([bytes],{type:'application/pdf'});
-    if(blob.size <= targetBytes || a===attempts.length-1){
-      return {blob, attempt:a+1, quality:q};
-    }
-  }
+let mode='balanced';
+function setMode(m,btn){mode=m; document.querySelectorAll('.mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');}
+function baseSettings(){
+  if(mode==='small') return {scale:0.8, q:0.45};
+  if(mode==='high') return {scale:1.4, q:0.80};
+  return {scale:1.1, q:0.65};
 }
 async function go(){
  let f=document.getElementById('file').files[0];
  if(!f){alert('Chagua faili kwanza!');return;}
+ let targetMB=parseFloat(document.getElementById('targetMB').value);
+ if(!targetMB || targetMB<=0){alert('Andika MB unayotaka, mfano 20');return;}
+ let targetBytes=targetMB*1024*1024;
  let prog=document.getElementById('progress'); let msg=document.getElementById('msg'); let warn=document.getElementById('warn');
- prog.textContent='Inakaza... subiri kidogo...'; msg.textContent=''; warn.style.display='none';
+ prog.textContent='Inakaza...'; msg.textContent=''; warn.style.display='none';
  try{
   if(f.type.startsWith('image/')){
     let img=new Image(); img.src=URL.createObjectURL(f);
     await new Promise(r=>img.onload=r);
-    let targetBytes=targetMB*1024*1024;
-    let quals=[0.7,0.5,0.35,0.2,0.12];
-    let done=null;
-    for(let qq of quals){
-      let c=document.createElement('canvas'); let s=Math.min(1,1600/img.width);
-      c.width=img.width*s; c.height=img.height*s;
+    let base=baseSettings();
+    let attempts=[{s:1,q:base.q},{s:0.8,q:base.q*0.8},{s:0.6,q:0.35},{s:0.5,q:0.25},{s:0.4,q:0.15}];
+    let done=null, used='';
+    for(let a=0;a<attempts.length;a++){
+      let c=document.createElement('canvas'); c.width=img.width*attempts[a].s; c.height=img.height*attempts[a].s;
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      let b=await new Promise(r=>c.toBlob(r,'image/jpeg',qq));
-      if(b.size<=targetBytes || qq===0.12){ done=b; break; }
+      let b=await new Promise(r=>c.toBlob(r,'image/jpeg',attempts[a].q));
+      prog.textContent=`Inajaribu kufika ${targetMB}MB... Jaribio ${a+1}/5`;
+      done=b; used=`Jaribio ${a+1}`;
+      if(b.size<=targetBytes) break;
     }
-    prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(done.size/1024/1024).toFixed(2)}MB (Target ${targetMB}MB)`;
-    show(done,f.name.replace(/\.[^.]+$/,'')+'-'+targetMB+'MB.jpg');
-  } else if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
+    prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(done.size/1024/1024).toFixed(2)}MB (Ulitaka ${targetMB}MB, ${mode})`;
+    show(done, f.name.replace(/\.[^.]+$/,'')+'-'+targetMB+'MB.jpg');
+  } else if(f.name.toLowerCase().endsWith('.pdf')){
     let buf=await f.arrayBuffer();
-    let res=await compressPdfToTarget(buf, targetMB*1024*1024, prog, 0);
-    prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(res.blob.size/1024/1024).toFixed(2)}MB (Target ${targetMB}MB, Jaribio ${res.attempt})`;
-    if(res.blob.size > targetMB*1024*1024){
-      warn.style.display='block';
-      warn.textContent=`Nimejaribu mara 6 kufika ${targetMB}MB. Hii ndio ndogo zaidi nimeweza: ${(res.blob.size/1024/1024).toFixed(2)}MB. Pakua hii au jaribu Target kubwa zaidi.`;
+    let pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let base=baseSettings();
+    // Hesabu kuanzia wapi kulingana na uwiano wa Target / Original
+    let ratio = targetBytes / f.size;
+    let startScale = ratio >= 1 ? base.scale : Math.max(0.35, base.scale * Math.sqrt(ratio));
+    let attempts=[
+      {scale:startScale, q:base.q},
+      {scale:startScale*0.85, q:base.q*0.8},
+      {scale:startScale*0.70, q:0.40},
+      {scale:startScale*0.55, q:0.30},
+      {scale:0.4, q:0.20},
+      {scale:0.3, q:0.12}
+    ];
+    let finalBlob=null, attemptNo=1;
+    for(let a=0;a<attempts.length;a++){
+      attemptNo=a+1;
+      let out=await PDFLib.PDFDocument.create();
+      for(let i=1;i<=pdf.numPages;i++){
+        prog.textContent=`Inajaribu kufika ${targetMB}MB... Jaribio ${a+1}/6 - Ukurasa ${i}/${pdf.numPages}`;
+        let page=await pdf.getPage(i);
+        let vp=page.getViewport({scale:attempts[a].scale});
+        let c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+        await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+        let dataUrl=c.toDataURL('image/jpeg',attempts[a].q);
+        let img=await out.embedJpg(dataUrl);
+        let p=out.addPage([img.width,img.height]); p.drawImage(img,{x:0,y:0,width:img.width,height:img.height});
+      }
+      let bytes=await out.save();
+      finalBlob=new Blob([bytes],{type:'application/pdf'});
+      if(finalBlob.size <= targetBytes) break;
     }
-    show(res.blob,f.name.replace('.pdf','')+'-'+targetMB+'MB.pdf');
-  } else {alert('Chagua PDF au Picha tu');}
+    prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(finalBlob.size/1024/1024).toFixed(2)}MB (Ulitaka ${targetMB}MB, ${mode}, Jaribio ${attemptNo})`;
+    if(finalBlob.size > targetBytes){
+      warn.style.display='block';
+      warn.textContent=`Nimejaribu mara 6. Ndogo zaidi nimeweza ni ${(finalBlob.size/1024/1024).toFixed(2)}MB. Jaribu kuongeza Target au chagua SMALL.`;
+    }
+    show(finalBlob, f.name.replace('.pdf','')+'-'+targetMB+'MB.pdf');
+  } else alert('Chagua PDF au Picha tu');
  }catch(e){prog.textContent='';msg.textContent='Imeshindwa: '+e.message;}
 }
 function show(blob,name){
@@ -118,4 +133,4 @@ function show(blob,name){
 }
 </script>
 </body>
- </html>
+  </html>
