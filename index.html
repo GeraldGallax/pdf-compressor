@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+hi<!DOCTYPE html>
 <html lang="sw">
 <head>
 <meta charset="UTF-8">
@@ -33,8 +33,9 @@ small{color:#777}
 <input type="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.webp"><br>
 <div class="targetBox">
 <b>Unataka iwe MB ngapi?</b><br><br>
-<input type="number" id="targetMB" value="5" min="0.5" max="100" step="0.5"> <b>MB</b><br>
+<input type="number" id="targetMB" value="5" min="0.5" max="100" step="0.5" oninput="checkRead()"> <b>MB</b><br>
 <small>Mfano: PDF ya 200MB, andika 20 -> itakuwa 20MB<br>PDF ya 50MB, andika 2 -> itakuwa 2MB</small>
+<div id="readWarn" style="display:none;margin-top:10px;background:#fff3e0;border:2px solid #ff9800;padding:10px;border-radius:8px;color:#e65100;font-weight:bold;font-size:13px;line-height:1.4"></div>
 </div>
 <b>Chagua Quality:</b>
 <div class="mode">
@@ -52,7 +53,29 @@ small{color:#777}
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 let mode='balanced';
-function setMode(m,btn){mode=m; document.querySelectorAll('.mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');}
+function checkRead(){
+  let t=parseFloat(document.getElementById('targetMB').value);
+  let f=document.getElementById('file').files[0];
+  let w=document.getElementById('readWarn');
+  if(!t){w.style.display='none'; return;}
+  // Kama hajachagua faili bado, mwambie kulingana na target peke yake
+  if(!f){
+    if(t<=1){ w.style.display='block'; w.innerHTML='⚠️ ANGALIZO: Ukichagua 1MB au chini, PDF yenye maandishi madogo kama TimeTable inaweza ISIsomeke vizuri. Kama ni TimeTable / Mkataba, chagua 5MB au zaidi.'; }
+    else if(t<=2){ w.style.display='block'; w.innerHTML='⚠️ ANGALIZO: 2MB ni ndogo. Kama PDF yako ina maandishi madogo sana, inaweza kupotea kidogo. Kwa kusomeka vizuri, chagua 5MB.'; }
+    else { w.style.display='none'; }
+    return;
+  }
+  let ratio = t*1024*1024 / f.size;
+  if(ratio < 0.15){
+    w.style.display='block';
+    w.innerHTML=`⚠️ ANGALIZO KUBWA: Unataka kupunguza kutoka ${(f.size/1024/1024).toFixed(1)}MB hadi ${t}MB (umeipunguza zaidi ya 85%). Hii inaweza ISIsomeke vizuri, hasa maandishi madogo kama TimeTable. Ushauri: Chagua ${Math.ceil(f.size/1024/1024*0.3)}MB au zaidi ili isomeke.`;
+  } else if(ratio < 0.35){
+    w.style.display='block';
+    w.innerHTML=`⚠️ ANGALIZO: Unapunguza sana (kutoka ${(f.size/1024/1024).toFixed(1)}MB hadi ${t}MB). Maandishi madogo yanaweza kupotea kidogo. Kama ni TimeTable, chagua kubwa zaidi kidogo.`;
+  } else {
+    w.style.display='none';
+  }
+}
 function baseSettings(){
   if(mode==='small') return {scale:0.8, q:0.45};
   if(mode==='high') return {scale:1.4, q:0.80};
