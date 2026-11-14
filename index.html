@@ -27,78 +27,88 @@ small{color:#777}
 <body>
 <div class="box">
 <h1>📄 Compress PDF & Image</h1>
-<h2>Compress PDF from 50MB to 1MB Free<br>Punguza PDF / Picha Bure - Bila Watermark</h2>
+<h2>Punguza PDF / Picha Bure - Bila Watermark<br>Chagua Unataka Iwe Kubwa Gani</h2>
 <input type="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.webp"><br>
-<b>Chagua Aina ya Kukaza:</b>
+<b>Unataka iwe MB ngapi?</b>
 <div class="mode">
-<button id="m1" onclick="setMode('small',this)">📱 SMALL SIZE<br><small>Kwa WhatsApp<br>50MB → 1-2MB</small></button>
-<button id="m2" class="active" onclick="setMode('balanced',this)">⚖️ BALANCED<br><small>Kawaida<br>50MB → 4-5MB</small></button>
-<button id="m3" onclick="setMode('high',this)">🖨️ HIGH QUALITY<br><small>Kwa Print / Picha<br>50MB → 10MB</small></button>
+<button id="m1" onclick="setMode(1,this)">🎯 1MB<br><small>Kwa WhatsApp<br>Ndogo Kabisa</small></button>
+<button id="m2" class="active" onclick="setMode(2,this)">🎯 2MB<br><small>Kawaida<br>Quality Nzuri</small></button>
+<button id="m3" onclick="setMode(5,this)">🎯 5MB<br><small>Kwa Print<br>Quality Kubwa</small></button>
 </div>
 <button class="main" onclick="go()">COMPRESS NOW - KAZA SASA</button>
 <div id="progress"></div>
 <div id="msg"></div>
 <div id="warn"></div>
 <a id="dl" download>⬇️ DOWNLOAD - PAKUA FAILI</a>
-<p><small>Free 3x per day | Pro 1,000/- or $1 Unlimited<br>Files deleted after 1 hour - No one sees your files</small></p>
+<p><small>Free 3x per day | Pro 1,000/- or $1 Unlimited<br>Files deleted after 1 hour</small></p>
 </div>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-let mode='balanced';
-function setMode(m,btn){mode=m; document.querySelectorAll('.mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.getElementById('warn').style.display='none';}
-function getQuality(){ if(mode==='small') return 0.35; if(mode==='high') return 0.82; return 0.68; }
-function getScale(){ if(mode==='small') return 0.7; if(mode==='high') return 1.5; return 1.3; }
+let targetMB=2;
+function setMode(m,btn){targetMB=m; document.querySelectorAll('.mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.getElementById('warn').style.display='none';}
+async function compressPdfToTarget(buf, targetBytes, prog, totalPages){
+  let attempts=[
+    {scale:1.2, q:0.65},
+    {scale:1.0, q:0.50},
+    {scale:0.8, q:0.40},
+    {scale:0.6, q:0.30},
+    {scale:0.5, q:0.22},
+    {scale:0.4, q:0.15}
+  ];
+  let pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  for(let a=0;a<attempts.length;a++){
+    let {scale,q}=attempts[a];
+    prog.textContent=`Inajaribu kufika ${targetMB}MB... Jaribio ${a+1}/6 (Quality ${Math.round(q*100)}%) - Ukurasa 0/${pdf.numPages}`;
+    let out=await PDFLib.PDFDocument.create();
+    for(let i=1;i<=pdf.numPages;i++){
+      prog.textContent=`Inajaribu kufika ${targetMB}MB... Jaribio ${a+1}/6 - Ukurasa ${i}/${pdf.numPages}`;
+      let page=await pdf.getPage(i);
+      let vp=page.getViewport({scale:scale});
+      let c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+      await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      let dataUrl=c.toDataURL('image/jpeg',q);
+      let img=await out.embedJpg(dataUrl);
+      let p=out.addPage([img.width,img.height]); p.drawImage(img,{x:0,y:0,width:img.width,height:img.height});
+    }
+    let bytes=await out.save();
+    let blob=new Blob([bytes],{type:'application/pdf'});
+    if(blob.size <= targetBytes || a===attempts.length-1){
+      return {blob, attempt:a+1, quality:q};
+    }
+  }
+}
 async function go(){
  let f=document.getElementById('file').files[0];
  if(!f){alert('Chagua faili kwanza!');return;}
- if(f.name.toLowerCase().endsWith('.docx')||f.name.toLowerCase().endsWith('.doc')){alert('Hii ni Word (.docx). Tafadhali ibadilishe kuwa PDF kwanza: Fungua Google Docs > Download as PDF');return;}
- let quality=getQuality(); let scale=getScale();
  let prog=document.getElementById('progress'); let msg=document.getElementById('msg'); let warn=document.getElementById('warn');
  prog.textContent='Inakaza... subiri kidogo...'; msg.textContent=''; warn.style.display='none';
  try{
   if(f.type.startsWith('image/')){
-   let img=new Image(); img.src=URL.createObjectURL(f);
-   await new Promise(r=>img.onload=r);
-   let c=document.createElement('canvas'); let s=Math.min(1,1600/img.width);
-   c.width=img.width*s; c.height=img.height*s;
-   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-   c.toBlob(b=>{checkAndShow(b,f,f.name.replace(/\.[^.]+$/,'')+'-compressed.jpg')},'image/jpeg',quality);
+    let img=new Image(); img.src=URL.createObjectURL(f);
+    await new Promise(r=>img.onload=r);
+    let targetBytes=targetMB*1024*1024;
+    let quals=[0.7,0.5,0.35,0.2,0.12];
+    let done=null;
+    for(let qq of quals){
+      let c=document.createElement('canvas'); let s=Math.min(1,1600/img.width);
+      c.width=img.width*s; c.height=img.height*s;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      let b=await new Promise(r=>c.toBlob(r,'image/jpeg',qq));
+      if(b.size<=targetBytes || qq===0.12){ done=b; break; }
+    }
+    prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(done.size/1024/1024).toFixed(2)}MB (Target ${targetMB}MB)`;
+    show(done,f.name.replace(/\.[^.]+$/,'')+'-'+targetMB+'MB.jpg');
   } else if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf')){
-   let buf=await f.arrayBuffer();
-   let pdf=await pdfjsLib.getDocument({data:buf}).promise;
-   let out=await PDFLib.PDFDocument.create();
-   for(let i=1;i<=pdf.numPages;i++){
-    prog.textContent=`Inakaza ukurasa ${i} / ${pdf.numPages}... (${mode})`;
-    let page=await pdf.getPage(i);
-    let vp=page.getViewport({scale:scale});
-    let c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
-    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
-    let dataUrl=c.toDataURL('image/jpeg',quality);
-    let img=await out.embedJpg(dataUrl);
-    let p=out.addPage([img.width,img.height]); p.drawImage(img,{x:0,y:0,width:img.width,height:img.height});
-   }
-   let bytes=await out.save();
-   let blob=new Blob([bytes],{type:'application/pdf'});
-   checkAndShow(blob,f,f.name.replace('.pdf','')+'-compressed.pdf',pdf.numPages);
+    let buf=await f.arrayBuffer();
+    let res=await compressPdfToTarget(buf, targetMB*1024*1024, prog, 0);
+    prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(res.blob.size/1024/1024).toFixed(2)}MB (Target ${targetMB}MB, Jaribio ${res.attempt})`;
+    if(res.blob.size > targetMB*1024*1024){
+      warn.style.display='block';
+      warn.textContent=`Nimejaribu mara 6 kufika ${targetMB}MB. Hii ndio ndogo zaidi nimeweza: ${(res.blob.size/1024/1024).toFixed(2)}MB. Pakua hii au jaribu Target kubwa zaidi.`;
+    }
+    show(res.blob,f.name.replace('.pdf','')+'-'+targetMB+'MB.pdf');
   } else {alert('Chagua PDF au Picha tu');}
  }catch(e){prog.textContent='';msg.textContent='Imeshindwa: '+e.message;}
-}
-function checkAndShow(blob,orig,name,pages){
- let prog=document.getElementById('progress'); let msg=document.getElementById('msg'); let warn=document.getElementById('warn');
- let oldMB=(orig.size/1024/1024).toFixed(1); let newMB=(blob.size/1024/1024).toFixed(1);
- if(blob.size > orig.size){
-  prog.textContent='';
-  warn.style.display='block';
-  if(mode==='small'){
-  warn.textContent=`✅ Faili yako TAYARI ni ndogo sana (${oldMB}MB). Haihitaji kukazwa. Tumia ile ya zamani uliyonayo, ni bora kuliko hii mpya ya ${newMB}MB.`;
-} else {
-  warn.textContent=`⚠️ ANGALIA! Zamani ${oldMB}MB, mpya ${newMB}MB - imeongezeka! Hii ni PDF ya maandishi tayari ndogo. Jaribu SMALL SIZE.`;
-  }
-  msg.textContent=''; document.getElementById('dl').style.display='none';
- } else {
-  prog.textContent = pages ? `Imemaliza! Ukurasa ${pages} umekazwa. Zamani: ${oldMB}MB -> Mpya: ${newMB}MB (${mode})` : `Imemaliza! Zamani: ${oldMB}MB -> Mpya: ${newMB}MB`;
-  show(blob,name);
- }
 }
 function show(blob,name){
  let a=document.getElementById('dl');
