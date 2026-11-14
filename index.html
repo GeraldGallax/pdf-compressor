@@ -71,9 +71,9 @@ small{color:#777}
 <div class="payOpt">
 <b>🇹🇿 Tanzania - 1,000 TZS</b><br>
 <small>1. Tuma <b>1,000/-</b> kwenda:</small><br>
-<b>M-PESA: 0755 000 000</b> <small>(Badilisha namba yako hapa)</small><br>
-<b>TIGO PESA: 0715 000 000</b><br>
-<b>Jina: GERALD GALLAX</b><br>
+<b>M-PESA: 0746796744</b> <small>(Badilisha namba yako hapa)</small><br>
+<b>TIGO PESA: 0658041668 </b><br>
+<b>Jina: Suleiman Karisha</b><br>
 <small>2. Utapata SMS yenye CODE. Iandike hapa chini:</small>
 <input type="text" id="tzCode" placeholder="Andika CODE ya M-Pesa hapa, mfano: 7H8J9K...">
 <button onclick="unlockPro('tz')">✅ NIMELIPA - FUNGUA PRO</button>
@@ -109,7 +109,7 @@ function isPro(){ return localStorage.getItem('pdf_pro')==='yes'; }
 function updateFreeInfo(){
   let el=document.getElementById('freeInfo');
   if(isPro()){ el.innerHTML='⭐ <b>PRO ACTIVE</b> - Unlimited, Asante kwa kulipa!'; el.style.background='#fff3e0'; }
-  else { let c=getCount(); el.innerHTML=`🎁 <b>Free leo: ${3-c} zimebaki</b> (3 kwa siku). Ukimaliza, lipia Pro 1,000/- Unlimited.`; }
+  else { let c=getCount(); el.innerHTML=`🎁 <b>Free leo: ${1-c} zimebaki</b> (1 kwa siku). Ukimaliza, lipia Pro 1,000/- Unlimited.`; }
 }
 updateFreeInfo();
 function showPay(){ document.getElementById('payBox').style.display='block'; document.getElementById('payBox').scrollIntoView({behavior:'smooth'}); }
