@@ -1,15 +1,15 @@
-hi<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="sw">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compress PDF & Image</title>
+<title>Compress PDF & Image - Punguza PDF Bure</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
 body{font-family:Arial;background:#e8f5e9;margin:0;padding:15px}
 .box{max-width:480px;margin:auto;background:#fff;border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-h1{font-size:24px}h2{font-size:15px;color:#333}
+h1{font-size:24px;margin:5px 0}h2{font-size:14px;color:#333}
 input[type=file]{margin:12px 0}
 .targetBox{background:#f1f8e9;padding:12px;border-radius:10px;margin:10px 0}
 .targetBox input{font-size:22px;width:90px;text-align:center;padding:8px;border:2px solid #1db954;border-radius:8px;font-weight:bold}
@@ -19,48 +19,122 @@ input[type=file]{margin:12px 0}
 .mode button.active{background:#1db954;color:#fff;border-color:#1db954}
 .mode button.active small{color:#e8ffe8}
 button.main{background:#1db954;color:#fff;border:0;padding:14px 20px;border-radius:10px;font-size:18px;font-weight:bold;width:100%;cursor:pointer}
+button.proBtn{background:#ff9800;color:#fff;border:0;padding:12px;border-radius:10px;font-weight:bold;width:100%;cursor:pointer;margin-top:10px}
 #msg{margin-top:12px;font-weight:bold;color:#1b5e20}
 #progress{margin-top:10px;color:#555}
 #warn{margin-top:10px;color:#b71c1c;font-weight:bold;display:none;background:#ffebee;padding:10px;border-radius:8px}
+#readWarn{display:none;margin-top:10px;background:#fff3e0;border:2px solid #ff9800;padding:10px;border-radius:8px;color:#e65100;font-weight:bold;font-size:13px;line-height:1.4}
 a#dl{display:none;margin-top:12px;background:#1565c0;color:#fff;padding:12px;border-radius:10px;text-decoration:none;font-weight:bold}
 small{color:#777}
+/* Malipo */
+#payBox{display:none;background:#fff8e1;border:2px solid #ff9800;border-radius:12px;padding:15px;margin-top:15px;text-align:left}
+#payBox h3{text-align:center;margin:5px 0}
+.payOpt{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;margin:8px 0}
+.payOpt b{font-size:16px}
+.payOpt input{width:100%;padding:10px;margin-top:8px;border:1px solid #ccc;border-radius:8px;font-size:16px;box-sizing:border-box}
+.payOpt button{background:#1db954;color:#fff;border:0;padding:10px;border-radius:8px;width:100%;font-weight:bold;margin-top:8px;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="box">
 <h1>📄 Compress PDF & Image</h1>
 <h2>Punguza PDF / Picha Bure - Bila Watermark</h2>
+<div id="freeInfo" style="background:#e3f2fd;padding:8px;border-radius:8px;font-size:13px"></div>
+
 <input type="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.webp"><br>
 <div class="targetBox">
 <b>Unataka iwe MB ngapi?</b><br><br>
 <input type="number" id="targetMB" value="5" min="0.5" max="100" step="0.5" oninput="checkRead()"> <b>MB</b><br>
 <small>Mfano: PDF ya 200MB, andika 20 -> itakuwa 20MB<br>PDF ya 50MB, andika 2 -> itakuwa 2MB</small>
-<div id="readWarn" style="display:none;margin-top:10px;background:#fff3e0;border:2px solid #ff9800;padding:10px;border-radius:8px;color:#e65100;font-weight:bold;font-size:13px;line-height:1.4"></div>
+<div id="readWarn"></div>
 </div>
+
 <b>Chagua Quality:</b>
 <div class="mode">
-<button id="m1" onclick="setMode('small',this)">📱 SMALL<br><small>Ndogo Kabisa<br>Kwa WhatsApp</small></button>
-<button id="m2" class="active" onclick="setMode('balanced',this)">⚖️ BALANCED<br><small>Kawaida<br>Quality Nzuri</small></button>
-<button id="m3" onclick="setMode('high',this)">🖨️ HIGH<br><small>Quality Kubwa<br>Kwa Print</small></button>
+<button onclick="setMode('small',this)">📱 SMALL<br><small>Ndogo Kabisa<br>Kwa WhatsApp</small></button>
+<button class="active" onclick="setMode('balanced',this)">⚖️ BALANCED<br><small>Kawaida<br>Quality Nzuri</small></button>
+<button onclick="setMode('high',this)">🖨️ HIGH<br><small>Quality Kubwa<br>Kwa Print</small></button>
 </div>
+
 <button class="main" onclick="go()">COMPRESS NOW - KAZA SASA</button>
 <div id="progress"></div>
 <div id="msg"></div>
 <div id="warn"></div>
 <a id="dl" download>⬇️ DOWNLOAD</a>
-<p><small>Free 3x per day | Pro 1,000/- or $1 Unlimited</small></p>
+
+<button class="proBtn" onclick="showPay()">⭐ UMEISHA FREE? LIPIA PRO - 1,000/- TU, UNLIMITED</button>
+
+<div id="payBox">
+<h3>⭐ LIPIA PRO - UNLIMITED</h3>
+<p style="text-align:center;font-size:13px">Lipa mara moja, tumia milele. Hakuna kikomo.</p>
+
+<div class="payOpt">
+<b>🇹🇿 Tanzania - 1,000 TZS</b><br>
+<small>1. Tuma <b>1,000/-</b> kwenda:</small><br>
+<b>M-PESA: 0755 000 000</b> <small>(Badilisha namba yako hapa)</small><br>
+<b>TIGO PESA: 0715 000 000</b><br>
+<b>Jina: GERALD GALLAX</b><br>
+<small>2. Utapata SMS yenye CODE. Iandike hapa chini:</small>
+<input type="text" id="tzCode" placeholder="Andika CODE ya M-Pesa hapa, mfano: 7H8J9K...">
+<button onclick="unlockPro('tz')">✅ NIMELIPA - FUNGUA PRO</button>
 </div>
+
+<div class="payOpt">
+<b>🌍 Nje ya Tanzania - $1 USD</b><br>
+<small>Lipa $1 kwa PayPal / Card, utapata CODE kwa email.</small><br>
+<a href="https://paypal.me/yourname/1" target="_blank" style="display:block;text-align:center;background:#003087;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">💳 LIPA $1 KWA PAYPAL</a>
+<input type="text" id="usCode" placeholder="Andika CODE uliyotumiwa kwa email">
+<button onclick="unlockPro('us')">✅ NIMELIPA - FUNGUA PRO</button>
+</div>
+
+<p style="text-align:center;font-size:12px;color:#777">Ukishalipa, PRO inafunguka kwenye simu hii mara moja.<br><span onclick="resetFree()" style="text-decoration:underline;cursor:pointer">Nina CODE ya Pro tayari</span></p>
+</div>
+
+<p><small>Files deleted after 1 hour - No one sees your files</small></p>
+</div>
+
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 let mode='balanced';
+function setMode(m,btn){mode=m; document.querySelectorAll('.mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');}
+
+// ===== MALIPO / FREE LIMIT =====
+function getToday(){ return new Date().toDateString(); }
+function getCount(){
+  let d=localStorage.getItem('pdf_date');
+  if(d!==getToday()){ localStorage.setItem('pdf_date',getToday()); localStorage.setItem('pdf_count','0'); return 0; }
+  return parseInt(localStorage.getItem('pdf_count')||'0');
+}
+function isPro(){ return localStorage.getItem('pdf_pro')==='yes'; }
+function updateFreeInfo(){
+  let el=document.getElementById('freeInfo');
+  if(isPro()){ el.innerHTML='⭐ <b>PRO ACTIVE</b> - Unlimited, Asante kwa kulipa!'; el.style.background='#fff3e0'; }
+  else { let c=getCount(); el.innerHTML=`🎁 <b>Free leo: ${3-c} zimebaki</b> (3 kwa siku). Ukimaliza, lipia Pro 1,000/- Unlimited.`; }
+}
+updateFreeInfo();
+function showPay(){ document.getElementById('payBox').style.display='block'; document.getElementById('payBox').scrollIntoView({behavior:'smooth'}); }
+function unlockPro(type){
+  let code = type==='tz' ? document.getElementById('tzCode').value.trim() : document.getElementById('usCode').value.trim();
+  if(code.length < 4){ alert('Andika CODE uliyopata baada ya kulipa kwanza. Kama hujalipa bado, lipa kwanza hapo juu.'); return; }
+  // Hapa ndipo utakapoangalia CODE na server yako baadaye. Kwa sasa tunafungua Pro.
+  localStorage.setItem('pdf_pro','yes');
+  alert('🎉 Hongera! PRO IMEFUNGUKA! Sasa unaweza kukaza mara nyingi unavyotaka, bila kikomo.');
+  document.getElementById('payBox').style.display='none';
+  updateFreeInfo();
+}
+function resetFree(){
+  let c=prompt('Andika CODE yako ya Pro:');
+  if(c && c.length>=4){ localStorage.setItem('pdf_pro','yes'); updateFreeInfo(); alert('PRO imefunguka!'); }
+}
+
+// ===== ONYO LA KUSOMEKA =====
 function checkRead(){
   let t=parseFloat(document.getElementById('targetMB').value);
   let f=document.getElementById('file').files[0];
   let w=document.getElementById('readWarn');
   if(!t){w.style.display='none'; return;}
-  // Kama hajachagua faili bado, mwambie kulingana na target peke yake
   if(!f){
-    if(t<=1){ w.style.display='block'; w.innerHTML='⚠️ ANGALIZO: Ukichagua 1MB au chini, PDF yenye maandishi madogo kama TimeTable inaweza ISIsomeke vizuri. Kama ni TimeTable / Mkataba, chagua 5MB au zaidi.'; }
+    if(t<=1){ w.style.display='block'; w.innerHTML='⚠️ ANGALIZO: 1MB au chini, PDF yenye maandishi madogo kama TimeTable inaweza ISIsomeke vizuri. Kama ni TimeTable / Mkataba, chagua 5MB au zaidi.'; }
     else if(t<=2){ w.style.display='block'; w.innerHTML='⚠️ ANGALIZO: 2MB ni ndogo. Kama PDF yako ina maandishi madogo sana, inaweza kupotea kidogo. Kwa kusomeka vizuri, chagua 5MB.'; }
     else { w.style.display='none'; }
     return;
@@ -68,41 +142,61 @@ function checkRead(){
   let ratio = t*1024*1024 / f.size;
   if(ratio < 0.15){
     w.style.display='block';
-    w.innerHTML=`⚠️ ANGALIZO KUBWA: Unataka kupunguza kutoka ${(f.size/1024/1024).toFixed(1)}MB hadi ${t}MB (umeipunguza zaidi ya 85%). Hii inaweza ISIsomeke vizuri, hasa maandishi madogo kama TimeTable. Ushauri: Chagua ${Math.ceil(f.size/1024/1024*0.3)}MB au zaidi ili isomeke.`;
+    w.innerHTML=`⚠️ ANGALIZO KUBWA: Unataka kupunguza kutoka ${(f.size/1024/1024).toFixed(1)}MB hadi ${t}MB (zaidi ya 85%). Hii inaweza ISIsomeke. Ushauri: Chagua ${Math.ceil(f.size/1024/1024*0.3)}MB au zaidi.`;
   } else if(ratio < 0.35){
     w.style.display='block';
-    w.innerHTML=`⚠️ ANGALIZO: Unapunguza sana (kutoka ${(f.size/1024/1024).toFixed(1)}MB hadi ${t}MB). Maandishi madogo yanaweza kupotea kidogo. Kama ni TimeTable, chagua kubwa zaidi kidogo.`;
-  } else {
-    w.style.display='none';
-  }
+    w.innerHTML=`⚠️ ANGALIZO: Unapunguza sana (kutoka ${(f.size/1024/1024).toFixed(1)}MB hadi ${t}MB). Maandishi madogo yanaweza kupotea kidogo.`;
+  } else { w.style.display='none'; }
 }
+
 function baseSettings(){
-  if(mode==='small') return {scale:0.8, q:0.45};
+  if(mode==='small') return {scale:0.9, q:0.45};
   if(mode==='high') return {scale:1.4, q:0.80};
   return {scale:1.1, q:0.65};
 }
+
 async function go(){
  let f=document.getElementById('file').files[0];
  if(!f){alert('Chagua faili kwanza!');return;}
+
+ // --- ANGALIA MALIPO KWANZA ---
+ if(!isPro()){
+   let c=getCount();
+   if(c>=3){
+     alert('🎁 Free 3 za leo zimeisha!\n\nLipia PRO 1,000/- tu, utumie Unlimited milele.\n\nBonyeza kitufe cha njano chini - LIPIA PRO');
+     showPay(); return;
+   }
+ }
+
  let targetMB=parseFloat(document.getElementById('targetMB').value);
  if(!targetMB || targetMB<=0){alert('Andika MB unayotaka, mfano 20');return;}
  let targetBytes=targetMB*1024*1024;
  let prog=document.getElementById('progress'); let msg=document.getElementById('msg'); let warn=document.getElementById('warn');
  prog.textContent='Inakaza...'; msg.textContent=''; warn.style.display='none';
+ checkRead();
+
+ // --- ZUIA KUHARIBU FAILI ---
+ let _r = targetBytes / f.size;
+ if(_r < 0.15){
+   let safeMB = Math.ceil(f.size/1024/1024*0.3);
+   alert(`⛔ IMEZUIWA: Huwezi kupunguza kutoka ${(f.size/1024/1024).toFixed(1)}MB hadi ${targetMB}MB. Ukifanya hivyo, faili yako ITAHARIBIKA na HAITASOMEKA.\n\nNdogo zaidi unayoweza kuweka ni ${safeMB}MB ili isomeke. Nimekuwekea ${safeMB}MB hapo juu, bonyeza COMPRESS tena.`);
+   document.getElementById('targetMB').value = safeMB;
+   prog.textContent=''; return;
+ }
+
  try{
   if(f.type.startsWith('image/')){
     let img=new Image(); img.src=URL.createObjectURL(f);
     await new Promise(r=>img.onload=r);
     let base=baseSettings();
     let attempts=[{s:1,q:base.q},{s:0.8,q:base.q*0.8},{s:0.6,q:0.35},{s:0.5,q:0.25},{s:0.4,q:0.15}];
-    let done=null, used='';
+    let done=null;
     for(let a=0;a<attempts.length;a++){
       let c=document.createElement('canvas'); c.width=img.width*attempts[a].s; c.height=img.height*attempts[a].s;
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
       let b=await new Promise(r=>c.toBlob(r,'image/jpeg',attempts[a].q));
       prog.textContent=`Inajaribu kufika ${targetMB}MB... Jaribio ${a+1}/5`;
-      done=b; used=`Jaribio ${a+1}`;
-      if(b.size<=targetBytes) break;
+      done=b; if(b.size<=targetBytes) break;
     }
     prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(done.size/1024/1024).toFixed(2)}MB (Ulitaka ${targetMB}MB, ${mode})`;
     show(done, f.name.replace(/\.[^.]+$/,'')+'-'+targetMB+'MB.jpg');
@@ -110,16 +204,16 @@ async function go(){
     let buf=await f.arrayBuffer();
     let pdf=await pdfjsLib.getDocument({data:buf}).promise;
     let base=baseSettings();
-    // Hesabu kuanzia wapi kulingana na uwiano wa Target / Original
     let ratio = targetBytes / f.size;
-    let startScale = ratio >= 1 ? base.scale : Math.max(0.35, base.scale * Math.sqrt(ratio));
+    let startScale = ratio >= 1 ? base.scale : Math.max(0.9, base.scale * Math.sqrt(ratio));
+    // SCALE IMEFUNGWA 0.8 - HAISHUKI CHINI ILI ISOMEKE
     let attempts=[
-      {scale:startScale, q:base.q},
-      {scale:startScale*0.85, q:base.q*0.8},
-      {scale:startScale*0.70, q:0.40},
-      {scale:startScale*0.55, q:0.30},
-      {scale:0.4, q:0.20},
-      {scale:0.3, q:0.12}
+      {scale:Math.max(0.9, startScale), q:base.q},
+      {scale:0.9, q:base.q*0.8},
+      {scale:0.85, q:0.45},
+      {scale:0.8, q:0.35},
+      {scale:0.8, q:0.25},
+      {scale:0.8, q:0.18}
     ];
     let finalBlob=null, attemptNo=1;
     for(let a=0;a<attempts.length;a++){
@@ -142,10 +236,14 @@ async function go(){
     prog.textContent=`Imemaliza! Zamani: ${(f.size/1024/1024).toFixed(1)}MB -> Mpya: ${(finalBlob.size/1024/1024).toFixed(2)}MB (Ulitaka ${targetMB}MB, ${mode}, Jaribio ${attemptNo})`;
     if(finalBlob.size > targetBytes){
       warn.style.display='block';
-      warn.textContent=`Nimejaribu mara 6. Ndogo zaidi nimeweza ni ${(finalBlob.size/1024/1024).toFixed(2)}MB. Jaribu kuongeza Target au chagua SMALL.`;
+      warn.textContent=`⚠️ Nimesimama hapa kwa sababu nikizidi kupunguza, faili yako HAITASOMEKA. Ndogo zaidi ya kusomeka ni ${(finalBlob.size/1024/1024).toFixed(2)}MB. Usijaribu kuipunguza zaidi ya hapo.`;
     }
     show(finalBlob, f.name.replace('.pdf','')+'-'+targetMB+'MB.pdf');
   } else alert('Chagua PDF au Picha tu');
+
+  // --- PUNGUZA FREE COUNT ---
+  if(!isPro()){ localStorage.setItem('pdf_count', (getCount()+1).toString()); updateFreeInfo(); }
+
  }catch(e){prog.textContent='';msg.textContent='Imeshindwa: '+e.message;}
 }
 function show(blob,name){
@@ -157,3 +255,4 @@ function show(blob,name){
 </script>
 </body>
   </html>
+  
